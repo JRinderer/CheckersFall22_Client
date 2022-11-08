@@ -32,6 +32,20 @@ public class Main {
         Main client = new Main("127.0.0.1",42691);
         try{
             //sends user message
+
+            client.data_out.writeUTF(client.user_input);
+            client.response = client.in_server.readUTF();
+            System.out.println(client.response);
+            //moving pieces
+            /*
+                this.color = parseClientMessage("color");
+                piece_name = parseClientMessage("piece_name");
+                x_cord = parseClientMessage("x_cord");
+                y_cord = parseClientMessage("y_cord");
+             */
+            client.sock.close();
+            client = new Main("127.0.0.1",42691);
+            client.user_input = "type:move,color:R,piece_name:R2-3,x_cord:3,y_cord:2";
             client.data_out.writeUTF(client.user_input);
             client.response = client.in_server.readUTF();
             System.out.println(client.response);
