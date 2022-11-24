@@ -98,6 +98,8 @@ public class Main {
                     } catch (Exception ex) {
                         System.out.println(ex);
                     }
+                }else if(!client.parseServerResponse("error").equals("")){
+                    System.out.println(client.parseServerResponse("error"));
                 }
                 thisPLayer.setBoard(client.parseServerResponse("board"));
                 System.out.println(thisPLayer.getBoard());
