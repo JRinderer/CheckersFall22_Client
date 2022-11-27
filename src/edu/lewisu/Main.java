@@ -46,95 +46,97 @@ public class Main {
         return map.get(key);
     }
 
-    public static void main(String[] args) {
-        /*
-        {
-            key: value, key: value
-        }
-        //get board
-            type:get_board
-         */
+    public static Main reEstablishConnection(Main connection){
 
-        Player thisPLayer = new Player();
-        //ask for player color
-        setColor(thisPLayer);
-        String currnt_board = "";
-        Main client = new Main("127.0.0.1", 42691);
+        Main return_client = null;
+
+        try{
+            connection.sock.close();
+            return_client =new Main("127.0.0.1", 42691);
+        }catch (Exception ex){
+            System.out.println("Error in closing the connection");
+        }
+
+        return return_client;
+
+    }
+
+    public static void setPlayerColor(Main client, Player thisPLayer){
         try {
-            //sending our color to the server
             client.data_out.writeUTF(thisPLayer.color);
             //receive the servers response
             client.response = client.in_server.readUTF();
             //check to make sure our server accepted our clients color
             while (!client.parseServerResponse("error").equals("")) {
-                client.sock.close();
-                client = new Main("127.0.0.1", 42691);
+                client = reEstablishConnection(client);
                 setColor(thisPLayer);
                 client.data_out.writeUTF(thisPLayer.color);
                 //receive the servers response
                 client.response = client.in_server.readUTF();
-                client.sock.close();
+                //client.sock.close();
             }
-            thisPLayer.setBoard(client.parseServerResponse("board"));
-            System.out.println(thisPLayer.getBoard());
-            System.out.println("The players color is: " + thisPLayer.getColor_str());
+        }catch (Exception ex){
+            System.out.println("error in setting color " + ex);
+        }
+    }
+
+    public static void playGame(Main client, Player thisPlayer){
+        try {
             while (true) {
                 client = new Main("127.0.0.1", 42691);
                 client.data_out.writeUTF("type:get_turn");
                 client.response = client.in_server.readUTF();
                 System.out.println("Player " + client.parseServerResponse("player_turn") + " is up");
                 System.out.println(client.parseServerResponse("board"));
-                if ((client.parseServerResponse("player_turn")).equals(thisPLayer.getColor_str())) {
+                if ((client.parseServerResponse("player_turn")).equals(thisPlayer.getColor_str())) {
                     client.sock.close();
                     client = new Main("127.0.0.1", 42691);
-                    thisPLayer.ask_piece();
-                    thisPLayer.ask_x();
-                    thisPLayer.ask_y();
+                    thisPlayer.ask_piece();
+                    thisPlayer.ask_x();
+                    thisPlayer.ask_y();
                     //client.user_input = "type:move,color:R,piece_name:R2-3,x_cord:3,y_cord:2";
-                    thisPLayer.set_send_message(thisPLayer.getPiece_input() + "," + thisPLayer.getX_input() + "," + thisPLayer.getY_input() + ",color:" + thisPLayer.getColor_str());
+                    thisPlayer.set_send_message(thisPlayer.getPiece_input() + "," + thisPlayer.getX_input() + "," + thisPlayer.getY_input() + ",color:" + thisPlayer.getColor_str());
                     try {
-                        client.data_out.writeUTF(thisPLayer.client_messg);
+                        client.data_out.writeUTF(thisPlayer.client_messg);
                         client.response = client.in_server.readUTF();
                     } catch (Exception ex) {
                         System.out.println(ex);
                     }
-                }else if(!client.parseServerResponse("error").equals("")){
+                } else if (!client.parseServerResponse("error").equals("")) {
                     System.out.println(client.parseServerResponse("error"));
                 }
-                thisPLayer.setBoard(client.parseServerResponse("board"));
-                System.out.println(thisPLayer.getBoard());
+                thisPlayer.setBoard(client.parseServerResponse("board"));
+                System.out.println(thisPlayer.getBoard());
                 try {
                     TimeUnit.SECONDS.sleep(10);
                 } catch (Exception ex) {
                     System.out.println("error in sleep");
                 }
             }
-            //==================ORIGINAL CLIENT
-            //sends user message
-            /*
-            client.data_out.writeUTF(client.user_input);
-            client.response = client.in_server.readUTF();
-            System.out.println(client.response);
-            //moving pieces
-            /*
-                this.color = parseClientMessage("color");
-                piece_name = parseClientMessage("piece_name");
-                x_cord = parseClientMessage("x_cord");
-                y_cord = parseClientMessage("y_cord");
-             */
-
-
-            /*
-            client.user_input = "type:move,color:R,piece_name:R2-3,x_cord:3,y_cord:2";
-            client.data_out.writeUTF(client.user_input);
-            client.response = client.in_server.readUTF();
-            System.out.println(client.response);
-
-             */
-
-        } catch (Exception ex) {
-            System.out.println(ex);
+        }catch (Exception ex){
+            System.out.println("Error in playing game " + ex);
         }
+    }
 
+    public static void printBoard(Main client, Player thisPlayer){
+        thisPlayer.setBoard(client.parseServerResponse("board"));
+        System.out.println(thisPlayer.getBoard());
+        System.out.println("The players color is: " + thisPlayer.getColor_str());
+    }
+
+    public static void main(String[] args) {
+        Player thisPLayer = new Player();
+        //ask for player color
+        setColor(thisPLayer);
+        String currnt_board = "";
+        //establish the initial connection
+        Main client = new Main("127.0.0.1", 42691);
+        //attempt to set the player color
+        //we will only return from this function if the player is set
+        setPlayerColor(client,thisPLayer);
+        //if we're able to set the color display the board
+        printBoard(client,thisPLayer);
+        //play the game
+        playGame(client,thisPLayer);
     }
 }
